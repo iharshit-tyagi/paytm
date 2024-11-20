@@ -32,6 +32,6 @@ UserSchema.methods.createHash=async (plainTextPassword)=>{
 
 // Validating the candidate password with stored hash and hash function
 UserSchema.methods.validatePassword = async function (candidatePassword) {
-    return await bcrypt.compare(candidatePassword, this.password_hash);
+    return await bcrypt.compare(candidatePassword, this.hashPassword);
   };
 export const User= mongoose.model('User',UserSchema)

@@ -68,6 +68,27 @@ const searchUser=await  User.findOne({username:req?.body?.username});
     next();
     
 }
+const validateUser=async (req,res,next)=>{
+    const userInfo= await User.findOne({username:req?.body?.username});
+    if(! userInfo){
+    res.status(411).json(
+        {
+            message: "Error while logging in, User does not exist"
+        }
+    );
+    return;
+    }
+   if(! await userInfo.validatePassword(req?.body?.password)){
+    res.status(401).json({
+        message: ' Invalid Password'
+    })
+    return;
+   }
+    req.token=generateJWT(req?.body?.username);
+    req.user= userInfo;
+    delete req.user.hashPassword;
+    next()
+}
 userRouter.post('/signup',validateBodySignup,updateDB,(req,res)=>{
 res.status(200).json({
 	message: "User created successfully",
@@ -76,8 +97,12 @@ res.status(200).json({
 })
 })
 
-userRouter.post('/signin',validateBodySignin,(req,res)=>{
-    res.status(200).json()
+userRouter.post('/signin',validateBodySignin,validateUser,(req,res)=>{
+    res.status(200).json({
+        message:'Signed in',
+        user: req?.user,
+        token:req?.token
+    })
 })
 
 export default userRouter;
