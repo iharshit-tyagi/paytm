@@ -1,19 +1,17 @@
 import mongoose from "mongoose";
 
-
+import bcrypt from "bcrypt"
 export  const connectDB = async()=>{
-    mongoose.connect(process.env.DB_CONNECTURL);
-    console.log('DB COnnec');
-    
+    mongoose.connect(process.env.DB_CONNECTURL);  
 }
 
-const userSchema= new mongoose.Schema({
+const UserSchema= new mongoose.Schema({
     username: {
         required: true,
         unique: true,
         type: String
     },
-    password:{
+    hashPassword:{
         required: true,
         type: String
     },
@@ -23,4 +21,17 @@ const userSchema= new mongoose.Schema({
     },
     lastName: String
 });
-export const User= mongoose.model('User',userSchema)
+UserSchema.methods.createHash=async (plainTextPassword)=>{
+    // Hashing user's salt and password with 10 iterations,
+    const saltRounds = 10;
+    
+    // First method to generate a salt and then create hash
+    const salt = await bcrypt.genSalt(saltRounds);
+    return await bcrypt.hash(plainTextPassword, salt);
+    }
+
+// Validating the candidate password with stored hash and hash function
+UserSchema.methods.validatePassword = async function (candidatePassword) {
+    return await bcrypt.compare(candidatePassword, this.password_hash);
+  };
+export const User= mongoose.model('User',UserSchema)
