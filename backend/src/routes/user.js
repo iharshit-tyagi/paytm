@@ -84,8 +84,8 @@ const validateUser=async (req,res,next)=>{
     })
     return;
    }
-    req.token=generateJWT(req?.body?.username);
-    req.user= userInfo;
+    req.token=await generateJWT(req?.body?.username);
+    req.user= userInfo.toObject();
     delete req.user.hashPassword;
     next()
 }
