@@ -1,7 +1,8 @@
 import { Router } from "express";
 import {z} from "zod";
 import { User } from "../models/db.js";
-import jwt from "jsonwebtoken"
+import jwt from "jsonwebtoken";
+import authMiddleware from "../middlewares/authMiddleware.js";
 const userRouter=Router();
 
 const zodUserSignup= z.object({
@@ -18,7 +19,7 @@ const zodUserSignin= z.object({
 })
 
 const generateJWT= async(username)=>{
-    const token =await  jwt.sign({username},process.env.JWT_SECRET,{ expiresIn: '120' });
+    const token =await  jwt.sign({username},process.env.JWT_SECRET,{ expiresIn: 120 });
    return token;
 }
 
@@ -104,5 +105,7 @@ userRouter.post('/signin',validateBodySignin,validateUser,(req,res)=>{
         token:req?.token
     })
 })
-
+userRouter.post('/auth',authMiddleware,(req,res)=>{
+res.send('oui')
+})
 export default userRouter;
