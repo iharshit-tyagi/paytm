@@ -105,7 +105,7 @@ userRouter.post('/signin',validateBodySignin,validateUser,(req,res)=>{
         token:req?.token
     })
 })
-userRouter.post('/auth',authMiddleware,(req,res)=>{
+userRouter.put('/',authMiddleware,(req,res)=>{
 res.send('oui')
 })
 export default userRouter;
