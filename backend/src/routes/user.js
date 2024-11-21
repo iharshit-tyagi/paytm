@@ -17,9 +17,20 @@ const zodUserSignin= z.object({
     password:z.string().min(8,{message:'Password should be of min 8 Characters'}),
    
 })
+const updateUserInfo=async (req,res,next)=>{
+     //as of now we are allowing to update firstName and lastName
+     
+    // const user= await User.findOne({username:req?.userID});
+    // console.log(user.createHash);
+    
+   
+    const userInfo= await User.updateOne({username:req?.userID},{firstName:req?.body?.firstName,lastName:req?.body?.lastName});
+   next();
+    
 
+}
 const generateJWT= async(username)=>{
-    const token =await  jwt.sign({username},process.env.JWT_SECRET,{ expiresIn: 120 });
+    const token =await  jwt.sign({username},process.env.JWT_SECRET,{ expiresIn: 5000 });
    return token;
 }
 
@@ -105,7 +116,9 @@ userRouter.post('/signin',validateBodySignin,validateUser,(req,res)=>{
         token:req?.token
     })
 })
-userRouter.put('/',authMiddleware,(req,res)=>{
-res.send('oui')
+userRouter.put('/',authMiddleware,updateUserInfo,(req,res)=>{
+res.status(200).json({
+	message: "Updated successfully"
+})
 })
 export default userRouter;
