@@ -34,4 +34,17 @@ UserSchema.methods.createHash=async (plainTextPassword)=>{
 UserSchema.methods.validatePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.hashPassword);
   };
+
+const AccountSchema=new  mongoose.Schema({
+    userID : {
+        type: mongoose.Schema.Types.ObjectId, // Reference to User model
+        ref: 'User',
+        required: true
+    }
+    ,balance: {
+        type: Number,
+        required:true
+    }
+})
+export const Account=mongoose.model('Account',AccountSchema);
 export const User= mongoose.model('User',UserSchema)

@@ -1,8 +1,9 @@
 import { Router } from "express";
 import {z} from "zod";
-import { User } from "../models/db.js";
+import { User,Account } from "../models/db.js";
 import jwt from "jsonwebtoken";
 import authMiddleware from "../middlewares/authMiddleware.js";
+
 const userRouter=Router();
 
 const zodUserSignup= z.object({
@@ -100,8 +101,15 @@ const searchUser=await  User.findOne({username:req?.body?.username});
     const hashPassword=  await newUser.createHash(req?.body?.password);
     req.token=await generateJWT(req?.body?.username);
     newUser.hashPassword=hashPassword;
-    await newUser.save();
-    req.userDB= await User.findOne({username:newUser?.username},'username firstName token');
+   const x= await newUser.save();
+   const userObj= x.toObject();
+   delete userObj.hashPassword;
+   
+    req.userDB=userObj// await User.findOne({username:newUser?.username},'username firstName token');
+    const newAccount= new Account({
+        userID: userObj?._id,
+        balance: 10000*(Math.random())
+    })
     next();
     
 }
