@@ -1,7 +1,7 @@
 import {Router} from 'express'
 import authMiddleware from '../middlewares/authMiddleware.js';
 import { User ,Account} from '../models/db.js';
-
+import mongoose from 'mongoose';
 const accountRoute= Router();
 
 const getBalanceFromDB=async(req,res,next)=>{
@@ -34,31 +34,28 @@ req.fromUser=fromUser
 next();
 }
 const doTransaction=async(req,res,next)=>{
-    const fromAccount= await Account.findOne({userID:req?.fromUser?._id});
-    const toAccount= await Account.findOne({userID:req?.toUser?._id});
-    const fromBalance= fromAccount?.balance;
-    const toBalance= toAccount?.balance;
+    const session = await mongoose.startSession();
+session.startTransaction();
+    const fromAccount= await Account.findOne({userID:req?.fromUser?._id}).session(session);
+    const toAccount= await Account.findOne({userID:req?.toUser?._id}).session(session);
+   
     if (fromAccount?.balance<req?.body?.amount){
-        res.status(400).json({
+        await  session.abortTransaction();
+      return  res.status(400).json({
             message:'Insufficient Balance'
         })
-        return;
     }
 
-    try{
-     await    Account.updateOne({userID:fromAccount?.userID},{balance:(fromBalance-req?.body?.amount)})
-   await      Account.updateOne({userID:toAccount?.userID},{balance:(toBalance+req?.body?.amount)})
+  
+     await    Account.updateOne({userID:fromAccount?.userID},{'$inc':{balance:-req?.body?.amount}}).session(session);
+   await      Account.updateOne({userID:toAccount?.userID},{'$inc':{balance:req?.body?.amount}}).session(session);
 //    await fromAccount.updateOne({balance:(fromBalance-req?.body?.amount)})
 //     await fromAccount.updateOne({balance:(toBalance+req?.body?.amount)})
-      next();
-    }catch(err){
-        await fromAccount.updateOne({balance:fromBalance})
-        await fromAccount.updateOne({balance:toBalance})
-        res.status(401).json({
-            message:'Transaction Failed!'
-        })
-        return;
-    }
+     session.commitTransaction();
+   
+ 
+     
+    next();
 }
 accountRoute.get('/balance',authMiddleware,getBalanceFromDB,(req,res)=>{
     res.status(200).json({
@@ -71,4 +68,4 @@ accountRoute.post('/transfer',authMiddleware,findToAccount,doTransaction,(req,re
         message: "Transfer successful"
     })
 })
-export default accountRoute;
+export default accountRoute; 
