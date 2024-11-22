@@ -110,6 +110,7 @@ const searchUser=await  User.findOne({username:req?.body?.username});
         userID: userObj?._id,
         balance: 10000*(Math.random())
     })
+    await newAccount.save();
     next();
     
 }
