@@ -33,7 +33,32 @@ const generateJWT= async(username)=>{
     const token =await  jwt.sign({username},process.env.JWT_SECRET,{ expiresIn: 5000 });
    return token;
 }
+const fetchUsersFromDb=async (req,res,next)=>{
+const queryParam = req.query;
+const fName= queryParam?.firstName;
+const lName=queryParam?.lastName;
+const filterObj={};
+if(fName){
+    filterObj.firstName=fName
+}
+if(lName){
+    filterObj.lastName=lName;
+}
 
+const userList = await User.find(filterObj).select('-hashPassword -__v');
+if(userList){
+    req.userList=userList;
+    next();
+}
+else{
+    res.status(404).json({
+        message:"No user found with the Selected Filter"
+    })
+}
+
+
+
+}
 const validateBodySignup=(req,res,next)=>{
 const inputBody= req?.body;
 const zodRes=zodUserSignup.safeParse(inputBody);
@@ -120,5 +145,8 @@ userRouter.put('/',authMiddleware,updateUserInfo,(req,res)=>{
 res.status(200).json({
 	message: "Updated successfully"
 })
+})
+userRouter.get('/bulk',authMiddleware,fetchUsersFromDb,(req,res)=>{
+res.status(200).json(req?.userList)
 })
 export default userRouter;
